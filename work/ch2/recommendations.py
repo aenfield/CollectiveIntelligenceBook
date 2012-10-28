@@ -88,6 +88,18 @@ def get_recommendations(all_preferences, person, similarity_func = sim_pearson):
 	rankings.reverse()
 	return rankings
 
+# swap first index w/ second index, to enable matches and recommendations on the 
+# second item; i.e., instead of first people and then movies (and matches and recs
+# based on similar people), we'd have first movies and then people, and can get
+# similarity matches and recommendations based on the similarity between movies
+def swap_first_and_second_indexes(all_preferences):
+	swapped_prefs = {}
+	for first_item in all_preferences:
+		for second_item in all_preferences[first_item]:
+			swapped_prefs.setdefault(second_item,{})
+			swapped_prefs[second_item][first_item] = all_preferences[first_item][second_item]
+
+	return swapped_prefs
 
 
 
