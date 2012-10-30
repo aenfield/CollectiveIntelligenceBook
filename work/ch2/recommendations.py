@@ -51,7 +51,8 @@ def sim_pearson(all_preferences, item1, item2):
 # items (products, say) as second-level items, then this function returns the most similar users;
 # if that same all_preferences dict is transformed so items/products are the first-level
 # items, then this function returns the items most similar to the specified item.
-def most_similar_first_level_items(all_preferences, first_level_item_to_match, num_of_matches = 5, similarity_func = sim_pearson):
+# The book calls this function 'topMatches'.
+def most_similar_first_level_items(all_preferences, first_level_item_to_match, num_of_similar_items = 5, similarity_func = sim_pearson):
 	scores = [(similarity_func(all_preferences, first_level_item_to_match, other_first_level_item), other_first_level_item) 
 		for other_first_level_item in all_preferences if other_first_level_item != first_level_item_to_match]
 
@@ -59,7 +60,7 @@ def most_similar_first_level_items(all_preferences, first_level_item_to_match, n
 	scores.sort()
 	scores.reverse()
 
-	return scores[0:num_of_matches]	
+	return scores[0:num_of_similar_items]	
 
 # Return the best/most similar second-level items for a specified first-level item.
 # If the all_preferences dict is set up with users as first-level items and items/products
@@ -68,6 +69,7 @@ def most_similar_first_level_items(all_preferences, first_level_item_to_match, n
 # It does this using a weighted average of every other user's  ratings, so that ratings 
 # from users that are more similar to the specified person (first-level item) hold
 # more weight when determining the recommendation.
+# The book calls this function 'getRecommendations'.
 def most_similar_second_level_items(all_preferences, first_level_item, similarity_func = sim_pearson):
 	totals = {}
 	similarity_sums = {}
@@ -100,6 +102,7 @@ def most_similar_second_level_items(all_preferences, first_level_item, similarit
 # second-level item; i.e., instead of first people and then movies (and matches and recs
 # based on similar people), we'd have first movies and then people, and can get
 # similarity matches and recommendations based on the similarity between movies.
+# The book calls this function 'transformPrefs'.
 def swap_first_and_second_indexes(all_preferences):
 	swapped_prefs = {}
 	for first_level_item in all_preferences:
@@ -109,7 +112,33 @@ def swap_first_and_second_indexes(all_preferences):
 
 	return swapped_prefs
 
+# Builds the item comparison data set - use this to precompute the most similar
+# second-level items for every other second-level item. When used with the typical
+# first-level item being a user and the second-level item being a product/item, this
+# function returns the most similar products/items for each product/item. You can
+# then use the result to more quickly recommend items by creating a weighted list of
+# items similar to the items a user has rated most highly.
+# The book calls this function 'calculateSimilarItems'. 
+def precompute_similar_second_level_items(all_preferences, num_of_similar_items = 10):
+	similar_items = {}
 
+	# first invert the prefs so you calculate most similar second-level items
+	all_preferences_second_level = swap_first_and_second_indexes(all_preferences)
+
+	count = 0
+	for item in all_preferences_second_level:
+		# output status, useful for large datasets
+		count += 1
+		if count%100==0: print "%d / %d" % (count, len(all_preferences_second_level))
+
+		# find the most similar items to this one
+		scores = most_similar_first_level_items(all_preferences_second_level, item, num_of_similar_items, sim_distance)
+		similar_items[item] = scores
+
+	return similar_items
+
+# I didn't work through the remaining parts of ch2 - getRecommendedItems, which uses the
+# above precompute_similar_second_level_items function.
 
 critics = {'Lisa Rose': {'Lady in the Water': 2.5, 
 						 'Snakes on a Plane': 3.5,
